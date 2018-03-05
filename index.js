@@ -21,7 +21,7 @@ router.get('/', function(req, res){
 });
 
 var mongoose = require('mongoose');
-mongoose.connect('mongodb://localhost/test');
+mongoose.connect('mongodb://@ds153958.mlab.com:53958/fareshare-backend');
 
 var User = require('./models/user');
 var Request = require('./models/request');
@@ -42,11 +42,6 @@ router.route('/requests')
         request.desiredTime = req.body.desiredTime;
 		request.requester = req.body.requester;
 		request.timeBuffer = req.body.timeBuffer;
-
-		console.log(req.body.destination);
-		console.log(req.body.desiredTime);
-		console.log(req.body.requester); 
-		console.log(req.body.timeBuffer); 
 
         //save auction
         request.save(function(err){
@@ -71,6 +66,51 @@ router.route('/requests')
             }
 
 			res.json(requests);
+
+        });
+
+    });
+
+router.route('/match/:id')
+
+    //get route
+    .get(function(req, res){
+        console.log("GET: requests")
+        
+        let requestId = req.params.id;
+        Request.findById(requestId, function(err, request){
+            if (err){
+                res.send(err);
+                conosle.log(err);
+            }
+
+            let destination = request.destination;
+            let desiredTime = request.desiredTime;
+            let timeBuffer = request.timeBuffer;
+
+            //Take attributes to find minimum and maximium time frames
+            let msBuffer = Number(timeBuffer) * 60 * 1000;
+            let lowerTimeBound = Date.now() - msBuffer;
+            let upperTimeBound = Date.now() + msBuffer;
+
+            console.log(msBuffer);
+            console.log(desiredTime);
+            console.log(upperTimeBound);
+
+            Request.find({
+                "_id": {
+                    $ne: requestId 
+                },
+                "desiredTime": {
+                    $gte: lowerTimeBound,
+                    $lte: upperTimeBound
+                },
+                "destination": destination
+            })
+            .exec(function(err, compatibleRequests){
+                console.log(compatibleRequests);
+                res.json(compatibleRequests);
+            });
 
         });
 
