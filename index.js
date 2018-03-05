@@ -21,7 +21,7 @@ router.get('/', function(req, res){
 });
 
 var mongoose = require('mongoose');
-mongoose.connect('mongodb://@ds153958.mlab.com:53958/fareshare-backend');
+mongoose.connect('mongodb://sammnaser:sabrina2004@ds153958.mlab.com:53958/fareshare-backend');
 
 var User = require('./models/user');
 var Request = require('./models/request');
