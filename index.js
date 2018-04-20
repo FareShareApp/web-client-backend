@@ -26,8 +26,10 @@ mongoose.connect('mongodb://sammnaser:sabrina2004@ds153958.mlab.com:53958/faresh
 var User = require('./models/user');
 var Request = require('./models/request');
 
+
+
 //-=-=-=-=-=-=-=-=-=-
-// ROUTE DEFINITIONS 
+// Request Routes 
 //-=-=-=-=-=-=-=-=-=-
 
 router.route('/requests')
@@ -39,9 +41,12 @@ router.route('/requests')
 
         var request = new Request();
         request.destination = req.body.destination;
-        request.desiredTime = req.body.desiredTime;
+        request.desiredTime = Date(req.body.desiredTime);
 		request.requester = req.body.requester;
-		request.timeBuffer = req.body.timeBuffer;
+        request.timeBuffer = req.body.timeBuffer;
+        request.profileUrl = req.body.profileUrl;
+
+        console.log(req.body.profileUrl);
 
         //save auction
         request.save(function(err){
@@ -62,7 +67,7 @@ router.route('/requests')
         Request.find(function(err, requests){
             if (err){
                 res.send(err);
-                conosle.log(err);
+                console.log(err);
             }
 
 			res.json(requests);
@@ -70,6 +75,70 @@ router.route('/requests')
         });
 
     });
+
+
+
+//-=-=-=-=-=-=-=-=-=-
+// User Routes 
+//-=-=-=-=-=-=-=-=-=-
+
+router.route('/users')
+
+    //create an article
+    .post(function(req, res){
+
+		console.log("POST: users")
+
+        var user = new User();
+        user.firstName = req.body.firstName;
+        user.lastName = req.body.lastName;
+		user.profileUrl = req.body.profileUrl;
+        user.email = req.body.email;
+        user.school = req.body.school;
+
+        //save auction
+        user.save(function(err){
+            //return the error in response if it exists
+            if (err){
+                res.send(err);
+                console.log(err);
+            }
+
+            res.json({message: 'User created!'});
+        });
+
+    })
+
+//Route that accepts an incoming Id as a parameter 
+//And either deletes or gets data for the given request
+router.route('/users/:id')
+
+    //Grab a request with the given ID 
+    .get(function(req, res){
+        let requestId = req.params.id;
+        User.findById(requestId, function(err, request){
+            res.json(request);
+        })
+    })
+
+    //Delete request with a given ID
+    .delete(function(req, res){
+
+        console.log("DELETE: delete request")
+
+        let requestId = req.params.id;
+        Request.remove({ _id: requestId}, function(err){
+            console.log("ERROR: could not delete given resource.")
+        });
+
+        res.json({message: 'Request deleted!'});
+
+    }) 
+
+
+//-=-=-=-=-=-=-=-=-=-
+// User Routes 
+//-=-=-=-=-=-=-=-=-=-
 
 router.route('/match/:id')
 
@@ -81,7 +150,7 @@ router.route('/match/:id')
         Request.findById(requestId, function(err, request){
             if (err){
                 res.send(err);
-                conosle.log(err);
+                console.log(err);
             }
 
             let destination = request.destination;
@@ -89,14 +158,12 @@ router.route('/match/:id')
             let timeBuffer = request.timeBuffer;
 
             //Take attributes to find minimum and maximium time frames
+            //TODO figure out why needs to be -(-)... JS type system whack
             let msBuffer = Number(timeBuffer) * 60 * 1000;
-            let lowerTimeBound = Date.now() - msBuffer;
-            let upperTimeBound = Date.now() + msBuffer;
+            let lowerTimeBound = desiredTime - msBuffer;
+            let upperTimeBound = desiredTime - (-msBuffer);
 
-            console.log(msBuffer);
-            console.log(desiredTime);
-            console.log(upperTimeBound);
-
+            //Find all requests with given time boundaries
             Request.find({
                 "_id": {
                     $ne: requestId 
@@ -108,8 +175,20 @@ router.route('/match/:id')
                 "destination": destination
             })
             .exec(function(err, compatibleRequests){
-                console.log(compatibleRequests);
-                res.json(compatibleRequests);
+
+                let userIdList = compatibleRequests.map((rideRequest) => {
+                    return mongoose.Types.ObjectId(rideRequest.requester);
+                })
+
+                User.find({
+                    '_id': { $in: userIdList}
+                    }, 
+                
+                    function(err, userMatches){
+                        console.log(userMatches);
+                        res.json(userMatches);
+                    });
+
             });
 
         });
