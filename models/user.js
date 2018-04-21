@@ -2,11 +2,11 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
 var UserSchema = new Schema({
-	firstName: String,
-	lastName: String,
-	profileUrl: String,
+	firstName: {type: String, default: "Johnny"},
+	lastName: {type: String, default: "Appleseed"},
+	profileUrl: {type: String, default: "https://randomuser.me/api/portraits/lego/7.jpg"},
 	email: String, 
-	school: String, 
+	school: {type: String, default: "Northwestern University"}, 
 	verified: {
 		type: Boolean,
 		default: false

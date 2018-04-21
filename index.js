@@ -1,6 +1,7 @@
 var express = require('express');
 var app = express();
 var bodyParser = require('body-parser');
+var url = require('url');
 
 //so the server can handle POST requests
 app.use(bodyParser.urlencoded({extended: true}));
@@ -63,8 +64,15 @@ router.route('/requests')
 
     //get route
     .get(function(req, res){
-		console.log("GET: requests")
-        Request.find(function(err, requests){
+        console.log("GET: requests")
+        
+        if(!req.query.userId)
+            return;
+
+        let desiredUserId = req.query.userId;
+        console.log(desiredUserId);
+
+        Request.find({requester: desiredUserId}, function(err, requests){
             if (err){
                 res.send(err);
                 console.log(err);
@@ -84,17 +92,43 @@ router.route('/requests')
 
 router.route('/users')
 
+    .get(function(req, res){
+
+        if(!req.query.username){
+            console.log("ROUTE REQUIRES USERNAME");
+            return;
+        }
+
+        User.findOne({email: req.query.username}, function(err, desiredUser){
+            if (err){
+                res.send(err);
+                console.log(err);
+            }
+
+			res.json(desiredUser);
+
+        });
+    })
+
     //create an article
     .post(function(req, res){
 
 		console.log("POST: users")
 
         var user = new User();
-        user.firstName = req.body.firstName;
-        user.lastName = req.body.lastName;
-		user.profileUrl = req.body.profileUrl;
         user.email = req.body.email;
-        user.school = req.body.school;
+
+        if(req.body.firstName)
+            user.firstName = req.body.firstName;
+
+        if(req.body.lastName)
+            user.lastName = req.body.lastName;
+
+        if(req.body.profileUrl)
+		    user.profileUrl = req.body.profileUrl;
+                
+        if(req.body.school)
+            user.school = req.body.school;
 
         //save auction
         user.save(function(err){
