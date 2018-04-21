@@ -42,10 +42,11 @@ router.route('/requests')
 
         var request = new Request();
         request.destination = req.body.destination;
-        request.desiredTime = Date(req.body.desiredTime);
+        request.desiredTime = req.body.desiredTime;
 		request.requester = req.body.requester;
         request.timeBuffer = req.body.timeBuffer;
 
+        console.log(req.body);
         //save auction
         request.save(function(err){
             //return the error in response if it exists
@@ -68,6 +69,7 @@ router.route('/requests')
 
         let desiredUserId = req.query.userId;
         console.log(desiredUserId);
+        
 
         Request.find({requester: desiredUserId}, function(err, requests){
             if (err){
