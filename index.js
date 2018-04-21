@@ -45,9 +45,6 @@ router.route('/requests')
         request.desiredTime = Date(req.body.desiredTime);
 		request.requester = req.body.requester;
         request.timeBuffer = req.body.timeBuffer;
-        request.profileUrl = req.body.profileUrl;
-
-        console.log(req.body.profileUrl);
 
         //save auction
         request.save(function(err){
